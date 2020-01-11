@@ -1,5 +1,6 @@
 import serial
 import time
+from urllib import request
 
 class Packet:
 
@@ -195,6 +196,36 @@ class Interface:
                     stats[type(packet).__name__] = packet.val()
         return stats
 
+    def collect_stats(self, handler=print):
+        last_fast = last_slow = last_water = 0
+        collect_water_at = 0
+        request_water = False
+        water_classes = [FreshPercent, GrayPercent]
+        while True:
+            # Keep reading, else the buffer might fill up.
+            packet = self.read_packet()
+            try:
+                if time.time() - last_fast > 5:
+                    last_fast = time.time()
+                    if request_water:
+                        if time.time() > collect_water_at:
+                            request_water = False
+                            handler(self.get_stats(*water_classes))
+                        else:
+                            for cls in water_classes:
+                                self.request(cls)
+                    handler(self.fast_stats())
+                if time.time() - last_slow > 60:
+                    last_slow = time.time()
+                    handler(self.slow_stats())
+                if time.time() - last_water > 600:
+                    last_water = time.time()
+                    collect_water_at = last_water + 30
+                    request_water = True
+            except:
+                # Better luck next time.
+                pass
+
     def read_packet(self):
         while True:
             start_byte = None
@@ -227,6 +258,29 @@ class Interface:
             for packet in sorted(counts):
                 if counts[packet] > 1:
                     print("{0}  x {1}".format(packet, counts[packet]))
+
+
+class IoTPlotterStatsHandler:
+    def __init__(self, feed, key):
+        self.feed = feed
+        self.key = key
+
+    def handler(self, stats):
+        lines = []
+        print(stats)
+        for name, value in stats.items():
+            if type(value) == dict:
+                for subname, value in value.items():
+                    lines.append("0,{0}_{1},{2}".format(name, subname, value))
+            else:
+                lines.append("0,{0},{1}".format(name, value))
+        req = request.Request(
+            "https://iotplotter.com/api/v2/feed/{0}.csv".format(self.feed),
+            data="\n".join(lines).encode(),
+            headers={"api-key": self.key},
+        )
+        request.urlopen(req).read()
+
 
 if __name__ == "__main__":
     # TODO: Hardcoded port for my local machine.
