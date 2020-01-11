@@ -19,42 +19,58 @@ class Packet:
 
 
 class SolarCurrent(Packet):
+    REQ_HDR = b"\x22\x10\xf4"
+    REQ_VAL = b"\x02\x00\x00"
     def __str__(self):
         return "{0}  {1:.1f} A solar current".format(super().__str__(),
             self.toSignedInt(self.frame[6:8], 1))
 
 class HouseCurrent(Packet):
+    REQ_HDR = b"\x22\x0c\xf4"
+    REQ_VAL = b"\x02\x00\x00"
     def __str__(self):
         return "{0}  {1:.1f} A house current".format(super().__str__(),
             self.toSignedInt(self.frame[6:8], 1))
 
 class VehicleVoltage(Packet):
+    REQ_HDR = b"\x22\x44\xf4"
+    REQ_VAL = b"\x03\x00\x00"
     def __str__(self):
         return "{0}  {1:.1f} V vehicle voltage".format(super().__str__(),
             self.toUnsignedInt(self.frame[6:8], 2))
 
 class HouseVoltage(Packet):
+    REQ_HDR = b"\x22\x0c\xf4"
+    REQ_VAL = b"\x03\x00\x00"
     def __str__(self):
         return "{0}  {1:.1f} V house voltage".format(super().__str__(),
             self.toUnsignedInt(self.frame[6:8], 2))
 
 class HouseCapacityAmpHours(Packet):
+    REQ_HDR = b"\x22\x0c\xf4"
+    REQ_VAL = b"\x05\x00\x00"
     def __str__(self):
         return "{0}  {1} Ah house capacity".format(super().__str__(),
             self.toUnsignedInt(self.frame[6:8]))
 
 class HouseCapacityPercent(Packet):
+    REQ_HDR = b"\x22\x0c\xf4"
+    REQ_VAL = b"\x06\x00\x00"
     def __str__(self):
         return "{0}  {1} % house capacity ({2})".format(super().__str__(),
             self.toUnsignedInt(self.frame[6:7]),
             self.toUnsignedInt(self.frame[7:8]))
 
 class FreshPercent(Packet):
+    REQ_HDR = b"\x22\x14\xf4"
+    REQ_VAL = b"\x02\x00\x00"
     def __str__(self):
         return "{0}  {1} % fresh water".format(super().__str__(),
             self.toUnsignedInt(self.frame[6:8]))
 
 class GrayPercent(Packet):
+    REQ_HDR = b"\x22\x18\xf4"
+    REQ_VAL = b"\x02\x00\x00"
     def __str__(self):
         return "{0}  {1} % gray water".format(super().__str__(),
             self.toUnsignedInt(self.frame[6:8]))
@@ -95,8 +111,8 @@ class Interface:
     def write(self, data):
         self.serial.write(data)
 
-    def write_packet(self, data):
-        without_checksum = b"\xaa" + data
+    def write_packet(self, header, payload):
+        without_checksum = b"\xaa" + header + bytes([len(payload)]) + payload
         checksum = self.checksum(without_checksum)
         self.write(without_checksum + bytes([checksum]))
 
@@ -105,6 +121,19 @@ class Interface:
         while len(data) < count:
             data += self.serial.read(count - len(data))
         return data
+
+    def request(self, what):
+        self.write_packet(what.REQ_HDR, what.REQ_VAL)
+
+    def get(self, what):
+        for send_retry in range(3):
+            self.request(what)
+            for recv_retry in range(10):
+                packet = self.read_packet()
+                if type(packet) == what:
+                    return packet
+            time.sleep(0.5)
+        return None
 
     def read_packet(self):
         while True:
