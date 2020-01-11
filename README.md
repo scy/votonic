@@ -149,9 +149,30 @@ Every packet on the bus I’ve seen seems to be 9 bytes long and consists of the
 ### Observations
 
 * When switching the display to “starter battery voltage”, I noticed the repeating packet `aa 62 f4 44 03 03 16 05 3e`, while a voltage of `13.0` was displayed. `05 16` is equal to 1302 in decimal. Need to check this with other voltages.
+* In `aa 62 f4 0c 03 03 16 05 76`, `05 16` again corresponds to a displayed voltage of `13.0` (it’s 1302 in decimal), but this time for the RV battery.
 * Displaying water tank percentage leads to packets like `aa 62 f4 14 03 02 1a 00 66` (`1a` being the fresh water percentage of 26 at that time) and `aa 62 f4 18 03 02 3d 00 4d` (`3d` corresponding to 61 % grey water). The packet with `14` seems to be the fresh water, the one with `18` the grey water value.
 * For temperatures of 20 °C indoors and 8 °C outdoors I was noticing the packets `aa 62 f4 30 03 02 4b 00 13` and `aa 62 f4 34 03 00 e5 00 bb`. However, manipulation of the indoor temperature seems to have no effect on these values, so I don’t expect them to be the temperature.
 * I couldn’t identify a package responsible for updating the clock each minute, so I guess the display has its own RTC (the clock survives disconnecting the display) or is initialized on boot from the master.
+* When displaying the current drawn at the moment, packets like `aa 62 f4 0c 03 02 ac ff 37` appear. `ff ac` is two’s complement and means -84. `-8.4A` was the current consumption displayed at this moment. This observation also works for other negative values. I have not yet tested positive values.
+* `aa 62 f4 0c 03 05 5d 00 3e` seems to correspond to a “remaining capacity” value of 93 Ah (`00 5d`).
+* In `aa 62 f4 0c 03 06 3a 53 09`, the `3a` seems to correspond to the “remaining capacity” value of 56 % (confirmed with other percentages). The byte following it fluctuates over time, I’m not sure what it means yet.
+
+### Messages
+
+These are the messages that I’m fairly sure of.
+For most of these, some bits or bytes are still unclear, these are marked as `??`.
+
+`##` is the payload length byte and usually `03`.
+
+#### Display related things, starting with `aa 62 f4`
+
+* `0c ## 02 LL HH`: RV battery current consumption, where `LL HH` are a 16-bit two’s complement deciamp value (e.g. `86 ff` for -12.2 A)
+* `0c ## 03 LL HH`: RV battery voltage, where `LL HH` are a 16-bit centivolt value (e.g. `16 05` for 13.02 V)
+* `0c ## 05 LL HH`: RV battery capacity remaining (Ah), where `LL HH` are an unsigned integer (e.g. `58 00` for 88 Ah)
+* `0c ## 06 XX ??`: RV battery capacity remaining (%), where `XX` is an unsigned integer (e.g. `37` for 55 %)
+* `14 ## 02 LL HH`: fresh water tank percentage, where `LL HH` is an unsigned integer (e.g. `1a 00` for 26 %)
+* `18 ## 02 LL HH`: grey water tank percentage, where `LL HH` is an unsigned integer (e.g. `3d 00` for 61 %)
+* `44 ## 03 LL HH`: starter battery voltage, see RV battery voltage above
 
 ## FAQ
 
