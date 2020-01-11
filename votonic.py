@@ -79,6 +79,9 @@ class Reader:
         self.bytes_buffer = b""
         self.serial = serial.Serial(port, 19200, timeout=1, bytesize=8, stopbits=1, parity=serial.PARITY_EVEN)
 
+    def write(self, data):
+        self.serial.write(data)
+
     def buffer(self, byte):
         self.bytes_buffer += bytes([byte])
 
@@ -109,11 +112,16 @@ class Reader:
         return packet
 
     def dump(self):
+        count = 0
         start = time.time()
         while True:
             packet_start = time.time()
             packet = self.read_packet()
+            count += 1
             print("{0:11.6f}  {1}".format(packet_start - start, packet), flush=True)
+            # After every 10th packet, request the house voltage.
+            if count % 10 == 0:
+                self.write(b"\xaa\x22\x0c\xf4\x03\x06\x00\x00\x20")
 
     def help_understand(self):
         counts = {}

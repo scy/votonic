@@ -156,6 +156,7 @@ Every packet on the bus I’ve seen seems to be 9 bytes long and consists of the
 * When displaying the current drawn at the moment, packets like `aa 62 f4 0c 03 02 ac ff 37` appear. `ff ac` is two’s complement and means -84. `-8.4A` was the current consumption displayed at this moment. This observation also works for other negative values. I have not yet tested positive values.
 * `aa 62 f4 0c 03 05 5d 00 3e` seems to correspond to a “remaining capacity” value of 93 Ah (`00 5d`).
 * In `aa 62 f4 0c 03 06 3a 53 09`, the `3a` seems to correspond to the “remaining capacity” value of 56 % (confirmed with other percentages). The byte following it fluctuates over time, I’m not sure what it means yet.
+* A message like `aa 22 0c f4 03 06 00 00 20` is sent before every “RV battery capacity percentage” message arrives: It’s the request for that value. I’ve tried sending this message and indeed got a capacity percentage back.
 
 ### Messages
 
