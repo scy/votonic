@@ -111,11 +111,12 @@ class Reader:
     def help_understand(self):
         counts = {}
         while True:
-            packet = self.format_packet(self.read_packet())
+            packet = str(self.read_packet())
             counts[packet] = (counts[packet] if packet in counts else 0) + 1
             print("\x1b[2J\x1b[H")
             for packet in sorted(counts):
-                print("{0}  x {1}".format(packet, counts[packet]))
+                if counts[packet] > 1:
+                    print("{0}  x {1}".format(packet, counts[packet]))
 
 if __name__ == "__main__":
     # TODO: Hardcoded port for my local machine.
