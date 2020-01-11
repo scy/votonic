@@ -1,4 +1,5 @@
 import serial
+import time
 
 class Reader:
 
@@ -37,6 +38,13 @@ class Reader:
     def format_packet(self, packet):
         return " ".join("{:02x}".format(byte) for byte in packet)
 
+    def dump(self):
+        start = time.time()
+        while True:
+            packet_start = time.time()
+            packet = self.format_packet(self.read_packet())
+            print("{0:11.6f}  {1}".format(packet_start - start, packet), flush=True)
+
     def help_understand(self):
         counts = {}
         while True:
@@ -49,4 +57,4 @@ class Reader:
 if __name__ == "__main__":
     # TODO: Hardcoded port for my local machine.
     reader = Reader("/dev/ttyS7")
-    reader.help_understand()
+    reader.dump()
