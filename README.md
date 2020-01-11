@@ -65,6 +65,35 @@ The bottom of the board contains:
 * 2× 690Y 2951 CMC [voltage regulators](http://ww1.microchip.com/downloads/en/DeviceDoc/mic2950.pdf), one for each bus port, apparently for power supply
 * TCLT1002 V 727 68 [optocoupler](https://www.vishay.com/docs/83515/tclt1000.pdf)
 
+## Values of Interest
+
+On the control unit, I can see the following values:
+
+* RV battery
+  * remaining capacity percentage
+  * voltage
+  * current (negative if discharging, positive if charging)
+  * remaining capacity in Ah
+* starter battery
+  * voltage
+* fresh water tank level percentage
+* grey water tank level percentage
+* indoor temperature
+* outdoor temperature
+* clock
+* solar current in A
+* status LEDs
+  * 230V external power
+  * charging battery (from 230V, I presume)
+  * inverter
+    * providing 230V
+    * overload
+    * manual
+    * automatic
+
+However, the water and temperature sensors are connected directly to the display, so it’s quite possible that their values may not be available via the bus.
+For water, though, I seem to have identified the corresponding packets already, see below.
+
 ## Physical Connection
 
 Most of the products I’m using connect through an 8-wire RJ45 jack.
@@ -116,6 +145,13 @@ Every packet on the bus I’ve seen seems to be 9 bytes long and consists of the
 * Probably the length of the payload; this was `03` in all non-collided packets I saw.
 * The payload; this was three bytes long in all non-collided packets I saw.
 * A one-byte checksum, but I don’t know the algorithm yet. It’s not a nonce or timestamp, because if the other bytes in the packet stay the same, this value is identical, too.
+
+### Observations
+
+* When switching the display to “starter battery voltage”, I noticed the repeating packet `aa 62 f4 44 03 03 16 05 3e`, while a voltage of `13.0` was displayed. `05 16` is equal to 1302 in decimal. Need to check this with other voltages.
+* Displaying water tank percentage leads to packets like `aa 62 f4 14 03 02 1a 00 66` (`1a` being the fresh water percentage of 26 at that time) and `aa 62 f4 18 03 02 3d 00 4d` (`3d` corresponding to 61 % grey water). The packet with `14` seems to be the fresh water, the one with `18` the grey water value.
+* For temperatures of 20 °C indoors and 8 °C outdoors I was noticing the packets `aa 62 f4 30 03 02 4b 00 13` and `aa 62 f4 34 03 00 e5 00 bb`. However, manipulation of the indoor temperature seems to have no effect on these values, so I don’t expect them to be the temperature.
+* I couldn’t identify a package responsible for updating the clock each minute, so I guess the display has its own RTC (the clock survives disconnecting the display) or is initialized on boot from the master.
 
 ## FAQ
 
