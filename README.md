@@ -3,6 +3,12 @@
 This project plans to reverse engineer and document the protocol used by the inverters, solar charge controllers, tank sensors, displays etc. produced by the German company [Votronic](https://votronic.de/).
 These products can be found in recreational and expedition vehicles, boats and so on.
 
+Note:
+There is also the [S-BC Bluetooth Connector](https://www.votronic.de/index.php/en/products/measuring-display-systems/energy-monitor-app) available from Votronic.
+If all you want to do is interface your setup with a smartphone, this might be your way to go.
+When I started working on this project, this component didn’t exist yet.
+And now, I kind of want to finish it anyway.
+
 ## Status
 
 Work in progress.
