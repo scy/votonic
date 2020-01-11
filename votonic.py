@@ -119,9 +119,6 @@ class Reader:
             packet = self.read_packet()
             count += 1
             print("{0:11.6f}  {1}".format(packet_start - start, packet), flush=True)
-            # After every 10th packet, request the house voltage.
-            if count % 10 == 0:
-                self.write(b"\xaa\x22\x0c\xf4\x03\x06\x00\x00\x20")
 
     def help_understand(self):
         counts = {}
