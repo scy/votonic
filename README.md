@@ -171,6 +171,7 @@ For most of these, some bits or bytes are still unclear, these are marked as `??
 * `0c ## 03 LL HH`: RV battery voltage, where `LL HH` are a 16-bit centivolt value (e.g. `16 05` for 13.02 V)
 * `0c ## 05 LL HH`: RV battery capacity remaining (Ah), where `LL HH` are an unsigned integer (e.g. `58 00` for 88 Ah)
 * `0c ## 06 XX ??`: RV battery capacity remaining (%), where `XX` is an unsigned integer (e.g. `37` for 55 %)
+* `10 ## 02 LL HH`: solar current input, where `LL HH` is a 16-bit unsigned deciamp value (e.g. `06 00` for 0.6 A)
 * `14 ## 02 LL HH`: fresh water tank percentage, where `LL HH` is an unsigned integer (e.g. `1a 00` for 26 %)
 * `18 ## 02 LL HH`: grey water tank percentage, where `LL HH` is an unsigned integer (e.g. `3d 00` for 61 %)
 * `44 ## 03 LL HH`: starter battery voltage, see RV battery voltage above

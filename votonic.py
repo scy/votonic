@@ -18,6 +18,11 @@ class Packet:
         return int(val) if decimals == 0 else val
 
 
+class SolarCurrent(Packet):
+    def __str__(self):
+        return "{0}  {1:.1f} A solar current".format(super().__str__(),
+            self.toSignedInt(self.frame[6:8], 1))
+
 class HouseCurrent(Packet):
     def __str__(self):
         return "{0}  {1:.1f} A house current".format(super().__str__(),
@@ -66,6 +71,8 @@ def parse_packet(frame):
                 return HouseCapacityAmpHours(frame)
             elif frame[5] == 0x06:
                 return HouseCapacityPercent(frame)
+        elif frame[3] == 0x10 and frame[5] == 0x02:
+            return SolarCurrent(frame)
         elif frame[3] == 0x14 and frame[5] == 0x02:
             return FreshPercent(frame)
         elif frame[3] == 0x18 and frame[5] == 0x02:
