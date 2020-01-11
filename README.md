@@ -23,9 +23,9 @@ This is the heart of the system, with one wire screw connection bar each at the 
 
 It also has three RJ45 connections labeled “Bus”, which are (in my setup) connected to
 
-* TODO
-* the Equipment Adapter
-* TODO
+* the Display / control unit
+* the Equipment Adapter and
+* the Solar/Battery Charger
 
 ### [Battery Charger Triple VBCS 45/30/350](https://www.votronic.de/index.php/en/products2/battery-charger-series-vbcs-triple/standard-version/vbcs-45-30-350)
 
