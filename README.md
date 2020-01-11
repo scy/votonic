@@ -9,6 +9,56 @@ Work in progress.
 
 I’ve figured out the physical/electrical setup (RS485 with RJ45 connectors) and am currently trying to make sense of the serial protocol that’s spoken on the wire.
 
+## Hardware I’m Using
+
+### Bus System VBS2 Master Box
+
+This is the heart of the system, with one wire screw connection bar each at the top and bottom, interfacing to non-bus components.
+
+It also has three RJ45 connections labeled “Bus”, which are (in my setup) connected to
+
+* TODO
+* the Equipment Adapter
+* TODO
+
+### [Battery Charger Triple VBCS 45/30/350](https://www.votronic.de/index.php/en/products2/battery-charger-series-vbcs-triple/standard-version/vbcs-45-30-350)
+
+Solar Charge Controller and Battery Charger.
+Connects to both the ignition and RV batteries.
+Also has a bus connection.
+
+I don’t mess with this thing, it has big wires.
+
+### [MobilPOWER Inverter SMI 1700 Sinus ST-NVS](https://www.votronic.de/index.php/en/products2/sine-inverters/standard-version/smi-1700-st-nvs)
+
+Does the 230V shizzle.
+Isn’t directly connected to the bus, but via the EQ-BCI adapter described below.
+
+### Equipment Adapter EQ-BCI
+
+This is a matchbox-sized device that has two RJ45 jacks labeled “Bus” and one smaller jack (RJ12? have to check) labeled “B2B/Charger/Inverter”.
+It apparently translates between whatever protocol my inverter is using and the bus protocol analyzed in this project.
+
+Since it has two bus connections, of which only one was used when I got my camper van, it was the perfect candidate to start reverse engineering and tapping into the bus.
+Looking at the chips inside the Equipment Adapter made me realize that the bus is using RS485, and looking at the datasheets of the ICs allowed me to reverse engineer the RJ45 pin mapping.
+
+#### Board Contents
+
+The top of the board contains:
+
+* `6N137` optocoupler
+* 25V 100µF capacitor
+* ZTT 8.00MT 8MHz ceramic resonator
+* diode labeled “Z 15”
+
+The bottom of the board contains:
+
+* ATMEL ATMEGA8L 8AU 1710D
+* 7LB176 68M AKY5 [RS-485 transciever](http://www.ti.com/lit/ds/slls067h/slls067h.pdf)
+  * pin 1 is at the bottom left (holding it so that the label on the IC is upright)
+* 2× 690Y 2951 CMC [voltage regulators](http://ww1.microchip.com/downloads/en/DeviceDoc/mic2950.pdf), one for each bus port, apparently for power supply
+* TCLT1002 V 727 68 [optocoupler](https://www.vishay.com/docs/83515/tclt1000.pdf)
+
 ## Physical Connection
 
 Most of the products I’m using connect through an 8-wire RJ45 jack.
