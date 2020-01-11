@@ -9,6 +9,9 @@ class Packet:
     def __str__(self):
         return " ".join("{:02x}".format(byte) for byte in self.frame)
 
+    def val(self):
+        return None
+
     def toSignedInt(self, raw, decimals=0):
         val = round(int.from_bytes(raw, byteorder="little", signed=True) / pow(10, decimals), decimals)
         return int(val) if decimals == 0 else val
@@ -21,59 +24,70 @@ class Packet:
 class SolarCurrent(Packet):
     REQ_HDR = b"\x22\x10\xf4"
     REQ_VAL = b"\x02\x00\x00"
+    def val(self):
+        return self.toSignedInt(self.frame[6:8], 1)
     def __str__(self):
-        return "{0}  {1:.1f} A solar current".format(super().__str__(),
-            self.toSignedInt(self.frame[6:8], 1))
+        return "{0}  {1:.1f} A solar current".format(super().__str__(), self.val())
 
 class HouseCurrent(Packet):
     REQ_HDR = b"\x22\x0c\xf4"
     REQ_VAL = b"\x02\x00\x00"
+    def val(self):
+        return self.toSignedInt(self.frame[6:8], 1)
     def __str__(self):
-        return "{0}  {1:.1f} A house current".format(super().__str__(),
-            self.toSignedInt(self.frame[6:8], 1))
+        return "{0}  {1:.1f} A house current".format(super().__str__(), self.val())
 
 class VehicleVoltage(Packet):
     REQ_HDR = b"\x22\x44\xf4"
     REQ_VAL = b"\x03\x00\x00"
+    def val(self):
+        return self.toUnsignedInt(self.frame[6:8], 2)
     def __str__(self):
-        return "{0}  {1:.1f} V vehicle voltage".format(super().__str__(),
-            self.toUnsignedInt(self.frame[6:8], 2))
+        return "{0}  {1:.1f} V vehicle voltage".format(super().__str__(), self.val())
 
 class HouseVoltage(Packet):
     REQ_HDR = b"\x22\x0c\xf4"
     REQ_VAL = b"\x03\x00\x00"
+    def val(self):
+        return self.toUnsignedInt(self.frame[6:8], 2)
     def __str__(self):
-        return "{0}  {1:.1f} V house voltage".format(super().__str__(),
-            self.toUnsignedInt(self.frame[6:8], 2))
+        return "{0}  {1:.1f} V house voltage".format(super().__str__(), self.val())
 
 class HouseCapacityAmpHours(Packet):
     REQ_HDR = b"\x22\x0c\xf4"
     REQ_VAL = b"\x05\x00\x00"
+    def val(self):
+        return self.toUnsignedInt(self.frame[6:8])
     def __str__(self):
-        return "{0}  {1} Ah house capacity".format(super().__str__(),
-            self.toUnsignedInt(self.frame[6:8]))
+        return "{0}  {1} Ah house capacity".format(super().__str__(), self.val())
 
 class HouseCapacityPercent(Packet):
     REQ_HDR = b"\x22\x0c\xf4"
     REQ_VAL = b"\x06\x00\x00"
+    def val(self):
+        return {
+            "percent": self.toUnsignedInt(self.frame[6:7]),
+            "unknown": self.toUnsignedInt(self.frame[7:8]),
+        }
     def __str__(self):
-        return "{0}  {1} % house capacity ({2})".format(super().__str__(),
-            self.toUnsignedInt(self.frame[6:7]),
-            self.toUnsignedInt(self.frame[7:8]))
+        val = self.val()
+        return "{0}  {1} % house capacity ({2})".format(super().__str__(), val["percent"], val["unknown"])
 
 class FreshPercent(Packet):
     REQ_HDR = b"\x22\x14\xf4"
     REQ_VAL = b"\x02\x00\x00"
+    def val(self):
+        return self.toUnsignedInt(self.frame[6:8])
     def __str__(self):
-        return "{0}  {1} % fresh water".format(super().__str__(),
-            self.toUnsignedInt(self.frame[6:8]))
+        return "{0}  {1} % fresh water".format(super().__str__(), self.val())
 
 class GrayPercent(Packet):
     REQ_HDR = b"\x22\x18\xf4"
     REQ_VAL = b"\x02\x00\x00"
+    def val(self):
+        return self.toUnsignedInt(self.frame[6:8])
     def __str__(self):
-        return "{0}  {1} % gray water".format(super().__str__(),
-            self.toUnsignedInt(self.frame[6:8]))
+        return "{0}  {1} % gray water".format(super().__str__(), self.val())
 
 
 def parse_packet(frame):
@@ -134,6 +148,54 @@ class Interface:
                     return packet
             time.sleep(0.5)
         return None
+
+    def get_val(self, what):
+        packet = self.get(what)
+        return None if packet is None else packet.val()
+
+    def get_stats(self, *types):
+        result = {}
+        for the_type in types:
+            result[the_type.__name__] = self.get_val(the_type)
+        return result
+
+    def fast_stats(self):
+        stats = self.get_stats(
+            SolarCurrent,
+            HouseCurrent,
+        )
+        stats["UsageCurrent"] = stats["HouseCurrent"] - stats["SolarCurrent"]
+        return stats
+
+    def slow_stats(self):
+        stats = self.get_stats(
+            SolarCurrent,
+            HouseCurrent,
+            HouseCapacityAmpHours,
+            HouseCapacityPercent,
+            HouseVoltage,
+            VehicleVoltage,
+        )
+        return {**self.fast_stats(), **stats}
+
+    def water_stats(self):
+        interested_in = [FreshPercent, GrayPercent]
+        stats = {}
+        # Request the stats every 5 seconds to keep the sensors alive.
+        # Do that for 30 seconds and then return the values.
+        start = time.time()
+        while time.time() - start < 30:
+            iteration_start = time.time()
+            for what in interested_in:
+                # print("Requesting", what.__name__)
+                self.request(what)
+            while time.time() - iteration_start < 5:
+                # We have to keep reading packets or the buffer fills up.
+                packet = self.read_packet()
+                if type(packet) in interested_in:
+                    # print("Got", str(packet))
+                    stats[type(packet).__name__] = packet.val()
+        return stats
 
     def read_packet(self):
         while True:
