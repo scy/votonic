@@ -81,7 +81,7 @@ def parse_packet(frame):
             return VehicleVoltage(frame)
     return Packet(frame)
 
-class Reader:
+class Interface:
 
     def __init__(self, port):
         self.serial = serial.Serial(port, 19200, timeout=1, bytesize=8, stopbits=1, parity=serial.PARITY_EVEN)
@@ -141,5 +141,5 @@ class Reader:
 
 if __name__ == "__main__":
     # TODO: Hardcoded port for my local machine.
-    reader = Reader("/dev/ttyS7")
-    reader.dump()
+    interface = Interface("/dev/ttyS7")
+    interface.dump()
