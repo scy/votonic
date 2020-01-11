@@ -205,7 +205,7 @@ class Interface:
             # Keep reading, else the buffer might fill up.
             packet = self.read_packet()
             try:
-                if time.time() - last_fast > 5:
+                if time.time() - last_fast > 10:
                     last_fast = time.time()
                     if request_water:
                         if time.time() > collect_water_at:
@@ -215,10 +215,10 @@ class Interface:
                             for cls in water_classes:
                                 self.request(cls)
                     handler(self.fast_stats())
-                if time.time() - last_slow > 60:
+                if time.time() - last_slow > 600:
                     last_slow = time.time()
                     handler(self.slow_stats())
-                if time.time() - last_water > 600:
+                if time.time() - last_water > 3600:
                     last_water = time.time()
                     collect_water_at = last_water + 30
                     request_water = True
