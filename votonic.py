@@ -164,7 +164,7 @@ class Interface:
             SolarCurrent,
             HouseCurrent,
         )
-        stats["UsageCurrent"] = stats["HouseCurrent"] - stats["SolarCurrent"]
+        stats["UsageCurrent"] = round(stats["HouseCurrent"] - stats["SolarCurrent"], 1)
         return stats
 
     def slow_stats(self):
