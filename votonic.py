@@ -40,8 +40,9 @@ class HouseCapacityAmpHours(Packet):
 
 class HouseCapacityPercent(Packet):
     def __str__(self):
-        return "{0}  {1} % house capacity".format(super().__str__(),
-            self.toUnsignedInt(self.frame[6:7]))
+        return "{0}  {1} % house capacity ({2})".format(super().__str__(),
+            self.toUnsignedInt(self.frame[6:7]),
+            self.toUnsignedInt(self.frame[7:8]))
 
 class FreshPercent(Packet):
     def __str__(self):
