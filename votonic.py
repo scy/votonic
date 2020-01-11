@@ -79,8 +79,19 @@ class Reader:
     def __init__(self, port):
         self.serial = serial.Serial(port, 19200, timeout=1, bytesize=8, stopbits=1, parity=serial.PARITY_EVEN)
 
+    def checksum(self, data):
+        checksum = 0x55
+        for byte in data:
+            checksum ^= byte
+        return checksum
+
     def write(self, data):
         self.serial.write(data)
+
+    def write_packet(self, data):
+        without_checksum = b"\xaa" + data
+        checksum = self.checksum(without_checksum)
+        self.write(without_checksum + bytes([checksum]))
 
     def read_bytes(self, count=1):
         data = b""
@@ -89,16 +100,18 @@ class Reader:
         return data
 
     def read_packet(self):
-        start_byte = None
-        while start_byte != b"\xaa":
-            start_byte = self.read_bytes(1)
-        header = self.read_bytes(3)
-        payload_length = self.read_bytes(1)
-        contents = self.read_bytes(payload_length[0])
-        checksum = self.read_bytes(1)
-        # Return the packet.
-        packet = parse_packet(start_byte + header + payload_length + contents + checksum)
-        return packet
+        while True:
+            start_byte = None
+            while start_byte != b"\xaa":
+                start_byte = self.read_bytes(1)
+            header = self.read_bytes(3)
+            payload_length = self.read_bytes(1)
+            contents = self.read_bytes(payload_length[0])
+            checksum = self.read_bytes(1)
+            everything = start_byte + header + payload_length + contents + checksum
+            if self.checksum(everything) == 0:
+                # That's a valid packet.
+                return parse_packet(everything)
 
     def dump(self):
         count = 0

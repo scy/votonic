@@ -144,7 +144,7 @@ Every packet on the bus I’ve seen seems to be 9 bytes long and consists of the
 * Three bytes of header data which could contain a “from” address, “to” address, type, mode or a combination thereof. Not yet understood.
 * Probably the length of the payload; this was `03` in all non-collided packets I saw.
 * The payload; this was three bytes long in all non-collided packets I saw.
-* A one-byte checksum, but I don’t know the algorithm yet. It’s not a nonce or timestamp, because if the other bytes in the packet stay the same, this value is identical, too.
+* A one-byte checksum, calculated by starting with `0x55` and then xor'ing each byte in the packet (including the `aa`) on top of that. (Thanks [Manawyrm](https://twitter.com/Manawyrm/status/1215915479228997632) for finding it out!)
 
 ### Observations
 
