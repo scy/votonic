@@ -76,39 +76,27 @@ def parse_packet(frame):
 class Reader:
 
     def __init__(self, port):
-        self.bytes_buffer = b""
         self.serial = serial.Serial(port, 19200, timeout=1, bytesize=8, stopbits=1, parity=serial.PARITY_EVEN)
 
     def write(self, data):
         self.serial.write(data)
 
-    def buffer(self, byte):
-        self.bytes_buffer += bytes([byte])
-
-    def read_byte(self):
-        if len(self.bytes_buffer):
-            byte = self.bytes_buffer[0]
-            self.bytes_buffer = self.bytes_buffer[1:]
-        else:
-            byte = self.serial.read()
-            byte = byte[0] if len(byte) else None
-        return byte
+    def read_bytes(self, count=1):
+        data = b""
+        while len(data) < count:
+            data += self.serial.read(count - len(data))
+        return data
 
     def read_packet(self):
         start_byte = None
-        while start_byte != 0xaa:
-            start_byte = self.read_byte()
-        contents = b""
-        next_byte = None
-        while next_byte != 0xaa:
-            next_byte = self.read_byte()
-            if next_byte is not None:
-                contents += bytes([next_byte])
-        # We have an excessive 0xaa at the end. Remove it from contents and put it into the buffer.
-        self.buffer(contents[-1])
-        contents = contents[:-1]
+        while start_byte != b"\xaa":
+            start_byte = self.read_bytes(1)
+        header = self.read_bytes(3)
+        payload_length = self.read_bytes(1)
+        contents = self.read_bytes(payload_length[0])
+        checksum = self.read_bytes(1)
         # Return the packet.
-        packet = parse_packet(bytes([start_byte]) + contents)
+        packet = parse_packet(start_byte + header + payload_length + contents + checksum)
         return packet
 
     def dump(self):
