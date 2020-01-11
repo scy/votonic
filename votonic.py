@@ -169,14 +169,12 @@ class Interface:
 
     def slow_stats(self):
         stats = self.get_stats(
-            SolarCurrent,
-            HouseCurrent,
             HouseCapacityAmpHours,
             HouseCapacityPercent,
             HouseVoltage,
             VehicleVoltage,
         )
-        return {**self.fast_stats(), **stats}
+        return stats
 
     def water_stats(self):
         interested_in = [FreshPercent, GrayPercent]
