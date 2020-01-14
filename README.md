@@ -107,7 +107,7 @@ The pinout looks like this:
 * **2 & 3:** Vin (power supply)
 * **4:** RS485 A wire
 * **5:** RS485 B wire
-* **6, 7 &8:** ground
+* **6, 7 & 8:** ground
 
 ## RS485 / UART properties
 
@@ -121,7 +121,7 @@ stty -F /dev/ttyWHATEVER 19200 cs8 -cstopb parenb -parodd raw
 
 I’m using [this RS485 USB adapter](https://www.amazon.de/USB-RS485-Adapter-mit-Gehäuse/dp/B00I9H5J02).
 
-If you want to look at the raw data using `hexump`, I’d use something like
+If you want to look at the raw data using `hexdump`, I’d use something like
 
 ```sh
 stdbuf -i0 -o0 -e0 hexdump -Cv /dev/ttyWHATEVER
