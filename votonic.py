@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+import argparse
 import serial
+import sys
 import time
 from urllib import request
 
@@ -301,6 +303,49 @@ class IoTPlotterStatsHandler:
 
 
 if __name__ == "__main__":
-    # TODO: Hardcoded port for my local machine.
-    interface = Interface("/dev/ttyS7")
-    interface.dump()
+    def run_dump(args):
+        interface = Interface(args.device)
+        interface.dump()
+
+    def run_send(args):
+        b = bytes.fromhex(args.hex)
+        if len(b) < 3:
+            raise ArgumentError("header needs at least 3 bytes")
+        if len(b) > 255:
+            raise ArgumentError("payload may not exceed 255 bytes")
+        interface = Interface(args.device)
+        for i in range(args.read_before):
+            print(interface.read_packet())
+        interface.write_packet(b[0:3], b[3:])
+        for i in range(args.read_after):
+            print(interface.read_packet())
+
+    def run_collect(args):
+        interface = Interface(args.device, dump=args.dump)
+        plotter = IoTPlotterStatsHandler(args.feed_id, args.key)
+        interface.collect_stats(plotter.handler)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--device", "-d", type=str, required=True)
+    subparsers = parser.add_subparsers()
+
+    parser_dump = subparsers.add_parser("dump")
+    parser_dump.set_defaults(func=run_dump)
+
+    parser_send = subparsers.add_parser("send")
+    parser_send.add_argument("--read-before", "-b", type=int, default=0)
+    parser_send.add_argument("--read-after", "-a", type=int, default=0)
+    parser_send.add_argument("hex", type=str)
+    parser_send.set_defaults(func=run_send)
+
+    parser_collect = subparsers.add_parser("collect")
+    parser_collect.add_argument("--feed-id", "-f", type=str, required=True)
+    parser_collect.add_argument("--key", "-k", type=str, required=True)
+    parser_collect.add_argument("--dump", "-v", action="store_true", default=False)
+    parser_collect.set_defaults(func=run_collect)
+
+    args = parser.parse_args()
+    if not "func" in args:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+    args.func(args)
