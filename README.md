@@ -91,8 +91,7 @@ On the control unit, I can see the following values:
     * manual
     * automatic
 
-However, the water and temperature sensors are connected directly to the display, so it’s quite possible that their values may not be available via the bus.
-For water, though, I seem to have identified the corresponding packets already, see below.
+However, the indoor temperature sensor is connected directly to the display, so it’s quite possible that its value may not be available via the bus.
 
 ## Physical Connection
 
@@ -151,7 +150,7 @@ Every packet on the bus I’ve seen seems to be 9 bytes long and consists of the
 * When switching the display to “starter battery voltage”, I noticed the repeating packet `aa 62 f4 44 03 03 16 05 3e`, while a voltage of `13.0` was displayed. `05 16` is equal to 1302 in decimal.
 * In `aa 62 f4 0c 03 03 16 05 76`, `05 16` again corresponds to a displayed voltage of `13.0` (it’s 1302 in decimal), but this time for the RV battery.
 * Displaying water tank percentage leads to packets like `aa 62 f4 14 03 02 1a 00 66` (`1a` being the fresh water percentage of 26 at that time) and `aa 62 f4 18 03 02 3d 00 4d` (`3d` corresponding to 61 % grey water). The packet with `14` seems to be the fresh water, the one with `18` the grey water value.
-* For temperatures of 20 °C indoors and 8 °C outdoors I was noticing the packets `aa 62 f4 30 03 02 4b 00 13` and `aa 62 f4 34 03 00 e5 00 bb`. However, manipulation of the indoor temperature seems to have no effect on these values, so I don’t expect them to be the temperature.
+* For temperatures of 20 °C indoors and 8 °C outdoors I was noticing the packets `aa 62 f4 30 03 02 4b 00 13` and `aa 62 f4 34 03 00 e5 00 bb`. Manipulation of the indoor temperature seems to have no effect on these values, but since the indoor temperature sensor is connected directly to the display, I don’t expect it to change. I’ll try to find the outdoor sensor, though.
 * I couldn’t identify a package responsible for updating the clock each minute, so I guess the display has its own RTC (the clock survives disconnecting the display) or is initialized on boot from the master.
 * When displaying the current drawn at the moment, packets like `aa 62 f4 0c 03 02 ac ff 37` appear. `ff ac` is two’s complement and means -84. `-8.4A` was the current consumption displayed at this moment. This observation also works for other negative and positive values.
 * `aa 62 f4 0c 03 05 5d 00 3e` seems to correspond to a “remaining capacity” value of 93 Ah (`00 5d`).
