@@ -9,8 +9,11 @@ class Packet:
     def __init__(self, frame):
         self.frame = frame
 
+    def hex(self, data):
+        return " ".join("{:02x}".format(byte) for byte in data)
+
     def __str__(self):
-        return " ".join("{:02x}".format(byte) for byte in self.frame)
+        return "{0} / {1}".format(self.hex(self.frame[1:4]), self.hex(self.frame[5:-1]))
 
     def val(self):
         return None
