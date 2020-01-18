@@ -119,8 +119,10 @@ def parse_packet(frame):
 
 class Interface:
 
-    def __init__(self, port):
+    def __init__(self, port, dump=False):
         self.serial = serial.Serial(port, 19200, timeout=1, bytesize=8, stopbits=1, parity=serial.PARITY_EVEN)
+        self.start = time.time()
+        self.dump = dump
 
     def checksum(self, data):
         checksum = 0x55
@@ -134,7 +136,10 @@ class Interface:
     def write_packet(self, header, payload):
         without_checksum = b"\xaa" + header + bytes([len(payload)]) + payload
         checksum = self.checksum(without_checksum)
-        self.write(without_checksum + bytes([checksum]))
+        checksummed = without_checksum + bytes([checksum])
+        if self.dump:
+            print(self.dump_format(Packet(checksummed), sent=True), flush=True)
+        self.write(checksummed)
 
     def read_bytes(self, count=1):
         data = b""
@@ -243,16 +248,24 @@ class Interface:
             everything = start_byte + header + payload_length + contents + checksum
             if self.checksum(everything) == 0:
                 # That's a valid packet.
-                return parse_packet(everything)
+                packet = parse_packet(everything)
+                if self.dump:
+                    print(self.dump_format(packet), flush=True)
+                return packet
+
+    def dump_format(self, packet, sent=False):
+        return "{0:11.6f}  {1}  {2}".format(
+            time.time() - self.start,
+            "-->" if sent else "   ",
+            packet,
+        )
 
     def dump(self):
+        self.dump = True
         count = 0
-        start = time.time()
         while True:
-            packet_start = time.time()
             packet = self.read_packet()
             count += 1
-            print("{0:11.6f}  {1}".format(packet_start - start, packet), flush=True)
 
     def help_understand(self):
         counts = {}
