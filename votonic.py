@@ -74,12 +74,12 @@ class HouseCapacityPercent(Packet):
     REQ_VAL = b"\x06\x00\x00"
     def val(self):
         return {
-            "percent": self.toUnsignedInt(self.frame[6:7]),
-            "unknown": self.toUnsignedInt(self.frame[7:8]),
+            "Percent": self.toUnsignedInt(self.frame[6:7]),
+            "Unknown": self.toUnsignedInt(self.frame[7:8]),
         }
     def __str__(self):
         val = self.val()
-        return "{0}  {1} % house capacity ({2})".format(super().__str__(), val["percent"], val["unknown"])
+        return "{0}  {1} % house capacity ({2})".format(super().__str__(), val["Percent"], val["Unknown"])
 
 class FreshPercent(Packet):
     REQ_HDR = b"\x22\x14\xf4"
@@ -238,6 +238,17 @@ class Interface:
                 # Better luck next time.
                 pass
 
+    @staticmethod
+    def flatten_stats(stats):
+        flat = {}
+        for name, value in stats.items():
+            if type(value) == dict:
+                for subname, value in value.items():
+                    flat[name + subname] = value
+            else:
+                flat[name] = value
+        return flat
+
     def read_packet(self):
         while True:
             start_byte = None
@@ -288,12 +299,8 @@ class IoTPlotterStatsHandler:
     def handler(self, stats):
         lines = []
         print(stats)
-        for name, value in stats.items():
-            if type(value) == dict:
-                for subname, value in value.items():
-                    lines.append("0,{0}_{1},{2}".format(name, subname, value))
-            else:
-                lines.append("0,{0},{1}".format(name, value))
+        for name, value in Interface.flatten_stats(stats).items():
+            lines.append("0,{0},{1}".format(name, value))
         req = request.Request(
             "https://iotplotter.com/api/v2/feed/{0}.csv".format(self.feed),
             data="\n".join(lines).encode(),
