@@ -2,6 +2,7 @@
 
 import argparse
 import serial
+import signal
 import sys
 import time
 from urllib import request
@@ -214,6 +215,7 @@ class Interface:
         request_water = False
         water_classes = [FreshPercent, GrayPercent]
         while True:
+            signal.alarm(30)
             # Keep reading, else the buffer might fill up.
             packet = self.read_packet()
             try:
@@ -355,4 +357,7 @@ if __name__ == "__main__":
     if not "func" in args:
         parser.print_help(sys.stderr)
         sys.exit(1)
+
+    signal.signal(signal.SIGALRM, lambda sig, stk: sys.exit(2))
+
     args.func(args)
