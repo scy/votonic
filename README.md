@@ -1,3 +1,7 @@
+# ➡ Moved to Codeberg
+
+**This repository now lives at <https://codeberg.org/scy/votonic>. See [Why are you leaving GitHub?](https://codeberg.org/scy/me/src/branch/main/FAQ.md#user-content-why-are-you-leaving-github) for my reasons. Please update your bookmarks accordingly and/or notify the creator(s) of whatever brought you here.**
+
 # VoTonic
 
 This project plans to reverse engineer and document the protocol used by the inverters, solar charge controllers, tank sensors, displays etc. produced by the German company [Votronic](https://votronic.de/).
